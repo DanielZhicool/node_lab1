@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTT Test Results</title>
+    <style>
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid black; padding: 10px; text-align: center; }
+        th { background-color: #f4f4f4; }
+        .table-container { margin-bottom: 40px; }
+    </style>
+</head>
+<body>
+    <h1>RTT Test Results</h1>
+    <button onclick="fetchResults()">Run Tests</button>
+    <div id="tablesContainer"></div>
+
+    <script>
+        async function fetchResults() {
+            const response = await fetch('/test-results');
+            const data = await response.json();
+            const tablesContainer = document.getElementById('tablesContainer');
+            tablesContainer.innerHTML = ''; // Clear previous results
+
+            const frequencies = [...new Set(data.map(row => row.frequency))];
+
+            frequencies.forEach(freq => {
+                const tableContainer = document.createElement('div');
+                tableContainer.classList.add('table-container');
+
+                const heading = document.createElement('h2');
+                heading.textContent = `Frequency: ${freq} Hz`;
+                tableContainer.appendChild(heading);
+
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Data Size (Bytes)</th>
+                            <th>Min RTT (ms)</th>
+                            <th>Max RTT (ms)</th>
+                            <th>Mean RTT (ms)</th>
+                            <th>Median RTT (ms)</th>
+                            <th>Std Dev</th>
+                            <th>Skewness</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                `;
+
+                const tableBody = table.querySelector('tbody');
+                data.filter(row => row.frequency === freq).forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row.dataSize}</td>
+                        <td>${row.min.toFixed(2)}</td>
+                        <td>${row.max.toFixed(2)}</td>
+                        <td>${row.mean.toFixed(2)}</td>
+                        <td>${row.median.toFixed(2)}</td>
+                        <td>${row.stddev.toFixed(2)}</td>
+                        <td>${row.skewness.toFixed(2)}</td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+
+                tableContainer.appendChild(table);
+                tablesContainer.appendChild(tableContainer);
+            });
+        }
+    </script>
+</body>
+</html>
